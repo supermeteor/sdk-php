@@ -1,0 +1,20 @@
+{
+    "name": "supermeteor/sdk-php",
+    "description": "This librabry use to create sms and email message using HTTP request",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Raj Pattani",
+            "email": "rrajsoni8000@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Supermeteor\\": ""
+        }
+    },
+    "require": {
+        "guzzlehttp/guzzle": "^6.3"
+    }
+}
