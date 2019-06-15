@@ -4,6 +4,7 @@ namespace Supermeteor;
 
 class Supermeteor
 {
+    protected $host = 'https://email-uat.lncknight.com'; // TODO update host
 	
     public $secretKey, $statusCode, $message;
     
@@ -102,11 +103,11 @@ class Supermeteor
         switch (strtolower($type)) {
             // for type sms
             case strtolower($type) == 'sms':
-                $url = 'https://email-uat.lncknight.com/sms/send';
+                $url = "{$this->host}/sms/send";
                 break;
             // for type whatsaap
             case strtolower($type) == 'whatsapp':
-                $url = 'https://email-uat.lncknight.com/whatsapp/send';
+                $url = "{$this->host}/whatsapp/send";
                 break;
             default:
                 $this->statusCode = 400;
@@ -172,7 +173,7 @@ class Supermeteor
             return $response;
         }
 
-        $url = 'https://email-uat.lncknight.com/email/send';
+        $url = "{$this->host}/email/send";
         $payload = [
             "secret" => $this->secretKey,
             "email" => $email,
