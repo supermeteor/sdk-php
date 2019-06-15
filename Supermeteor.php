@@ -4,11 +4,13 @@ namespace Supermeteor;
 
 class Supermeteor
 {
+	
     public $secretKey, $statusCode, $message;
-
-    /**
-     * Supermeteor constructor.
-     */
+	
+	/**
+	 * Supermeteor constructor.
+	 * @param $secretKey
+	 */
     public function __construct($secretKey)
     {
         $this->secretKey = $secretKey;
@@ -49,14 +51,18 @@ class Supermeteor
 
     public function response()
     {
-        http_response_code($this->statusCode);
-        header('Content-Type: application/json');
         $message = ["message" => $this->message];
         $response = json_encode($message);
 
         return $response;
     }
-
+	
+	/**
+	 * @param $type
+	 * @param $phone
+	 * @param $message
+	 * @return bool
+	 */
     public function ValidateSendMessageRequest($type, $phone, $message)
     {
         if (strtolower($type) == 'sms' || strtolower($type) == 'whatsapp') {
@@ -77,14 +83,20 @@ class Supermeteor
 
         return true;
     }
-
+	
+	/**
+	 * @param $type
+	 * @param $phone
+	 * @param $message
+	 * @return mixed|string
+	 * @throws RequestException
+	 */
     public function sendMessage($type, $phone, $message)
     {
         // validate if type, phone or message must not blank.
         $valid = $this->ValidateSendMessageRequest($type, $phone, $message);
         if (!$valid) {
-            $response = $this->response();
-            return $response;
+            throw new RequestException($this->message);
         }
 
         // check which type of message to send.
@@ -114,23 +126,18 @@ class Supermeteor
                     'message' => $message
                 ]
             ]);
-            $result = json_decode($response->getBody());
-            $resultArr = ['jobId' => $result->jobId];
-            header('Content-Type: application/json');
-            $result = json_encode($resultArr);
-
-            return $result;
+            return json_decode($response->getBody()->getContents(), true);
         } catch (\Exception $e){
-
-            http_response_code($e->getCode());
-            header('Content-Type: application/json');
-            $response = $e->getResponse();
-            $response = $response->getBody()->getContents();
-
-            return $response;
+        	throw new RequestException($e->getMessage(), $e->getCode(), $e);
         }
     }
-
+	
+	/**
+	 * @param $email
+	 * @param $subject
+	 * @param $message
+	 * @return bool
+	 */
     public function ValidateSendEmailRequest($email, $subject, $message)
     {
         if ($email == '') {
@@ -148,7 +155,14 @@ class Supermeteor
         }
         return true;
     }
-
+	
+	/**
+	 * @param $email
+	 * @param $subject
+	 * @param $message
+	 * @return mixed|\Psr\Http\Message\ResponseInterface|string
+	 * @throws RequestException
+	 */
     public function sendEmail($email, $subject, $message)
     {
         // validate if email, message, subject must not blank.
@@ -166,13 +180,17 @@ class Supermeteor
             "subject" => $subject,
             "message" => $message
         ];
-
-        $client = new \GuzzleHttp\Client();
-
-        $response = $client->request(
-            'POST', $url, [\GuzzleHttp\RequestOptions::JSON => [$payload]]);
-        $contents = $response->getBody()->getContents();
         
-        return $contents;
+        try {
+	        $client = new \GuzzleHttp\Client();
+	
+	        $response = $client->request(
+		        'POST', $url, [\GuzzleHttp\RequestOptions::JSON => [$payload]]);
+	        $contents = json_decode($response->getBody()->getContents(), true);
+	        return $contents;
+        }
+        catch (\Exception $e){
+	        throw new RequestException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 }
