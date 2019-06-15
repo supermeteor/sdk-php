@@ -6,11 +6,11 @@ class Supermeteor
 {
 	
     public $secretKey, $statusCode, $message;
-	
-	/**
-	 * Supermeteor constructor.
-	 * @param $secretKey
-	 */
+    
+    /**
+     * Supermeteor constructor.
+     * @param $secretKey
+     */
     public function __construct($secretKey)
     {
         $this->secretKey = $secretKey;
@@ -56,13 +56,13 @@ class Supermeteor
 
         return $response;
     }
-	
-	/**
-	 * @param $type
-	 * @param $phone
-	 * @param $message
-	 * @return bool
-	 */
+    
+    /**
+     * @param $type
+     * @param $phone
+     * @param $message
+     * @return bool
+     */
     public function ValidateSendMessageRequest($type, $phone, $message)
     {
         if (strtolower($type) == 'sms' || strtolower($type) == 'whatsapp') {
@@ -83,14 +83,14 @@ class Supermeteor
 
         return true;
     }
-	
-	/**
-	 * @param $type
-	 * @param $phone
-	 * @param $message
-	 * @return mixed|string
-	 * @throws RequestException
-	 */
+    
+    /**
+     * @param $type
+     * @param $phone
+     * @param $message
+     * @return mixed|\Psr\Http\Message\ResponseInterface|string
+     * @throws RequestException
+     */
     public function sendMessage($type, $phone, $message)
     {
         // validate if type, phone or message must not blank.
@@ -131,13 +131,13 @@ class Supermeteor
         	throw new RequestException($e->getMessage(), $e->getCode(), $e);
         }
     }
-	
-	/**
-	 * @param $email
-	 * @param $subject
-	 * @param $message
-	 * @return bool
-	 */
+    
+    /**
+     * @param $email
+     * @param $subject
+     * @param $message
+     * @return bool
+     */
     public function ValidateSendEmailRequest($email, $subject, $message)
     {
         if ($email == '') {
@@ -155,14 +155,14 @@ class Supermeteor
         }
         return true;
     }
-	
-	/**
-	 * @param $email
-	 * @param $subject
-	 * @param $message
-	 * @return mixed|\Psr\Http\Message\ResponseInterface|string
-	 * @throws RequestException
-	 */
+    
+    /**
+     * @param $email
+     * @param $subject
+     * @param $message
+     * @return mixed|\Psr\Http\Message\ResponseInterface|string
+     * @throws RequestException
+     */
     public function sendEmail($email, $subject, $message)
     {
         // validate if email, message, subject must not blank.
