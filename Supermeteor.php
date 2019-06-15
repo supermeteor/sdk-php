@@ -2,6 +2,8 @@
 
 namespace Supermeteor;
 
+require_once __DIR__ . 'vendor/autoload.php';
+
 class Supermeteor
 {
     public $secretKey, $statusCode, $message;
