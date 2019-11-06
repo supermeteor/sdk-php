@@ -2,19 +2,29 @@
 
 namespace Supermeteor;
 
-class Supermeteor
+class Client
 {
-    protected $host = 'https://email-uat.lncknight.com'; // TODO update host
+    protected $host = 'https://api.supermeteor.com';
+    protected $hostSandbox = 'https://api-uat.supermeteor.com';
 	
-    public $secretKey, $statusCode, $message;
+    public $secretKey, $statusCode, $message, $sandbox;
     
     /**
-     * Supermeteor constructor.
+     * Client constructor.
      * @param $secretKey
+     * @param bool $sandbox
      */
-    public function __construct($secretKey)
+    public function __construct($secretKey, $sandbox = false)
     {
         $this->secretKey = $secretKey;
+        $this->sandbox = $sandbox;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getHost(){
+        return $this->sandbox ? $this->hostSandbox : $this->host;
     }
 
     /**
@@ -103,11 +113,11 @@ class Supermeteor
         switch (strtolower($type)) {
             // for type sms
             case strtolower($type) == 'sms':
-                $url = "{$this->host}/sms/send";
+                $url = "{$this->getHost()}/sms/send";
                 break;
             // for type whatsaap
             case strtolower($type) == 'whatsapp':
-                $url = "{$this->host}/whatsapp/send";
+                $url = "{$this->getHost()}/whatsapp/send";
                 break;
             default:
                 $this->statusCode = 400;
@@ -173,7 +183,7 @@ class Supermeteor
             return $response;
         }
 
-        $url = "{$this->host}/email/send";
+        $url = "{$this->getHost()}/email/send";
         $payload = [
             "secret" => $this->secretKey,
             "email" => $email,
@@ -185,7 +195,38 @@ class Supermeteor
 	        $client = new \GuzzleHttp\Client();
 	
 	        $response = $client->request(
-		        'POST', $url, [\GuzzleHttp\RequestOptions::JSON => [$payload]]);
+		        'POST', $url, [\GuzzleHttp\RequestOptions::JSON => $payload]);
+	        $contents = json_decode($response->getBody()->getContents(), true);
+	        return $contents;
+        }
+        catch (\Exception $e){
+	        throw new RequestException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+    
+    /**
+     * @param $fromPhone
+     * @param $toPhone
+     * @param $message
+     * @return mixed|\Psr\Http\Message\ResponseInterface|string
+     * @throws RequestException
+     */
+    public function sendWhatsapp($fromPhone, $toPhone, $message)
+    {
+
+        $url = "{$this->getHost()}/whatsapp/send";
+        $payload = [
+            "secret" => $this->secretKey,
+            "fromPhone" => $fromPhone,
+            "phone" => $toPhone,
+            "message" => $message
+        ];
+        
+        try {
+	        $client = new \GuzzleHttp\Client();
+	
+	        $response = $client->request(
+		        'POST', $url, [\GuzzleHttp\RequestOptions::JSON => $payload]);
 	        $contents = json_decode($response->getBody()->getContents(), true);
 	        return $contents;
         }
