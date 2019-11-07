@@ -1,6 +1,8 @@
 <?php
 
 // ============== Demo for sending whatsapp message ==============
+// github url: https://github.com/supermeteor/sdk-php/
+// install: composer require supermeteor/sdk-php
 
 // includes composer autoloader
 require_once '../vendor/autoload.php';
