@@ -206,22 +206,28 @@ class Client
     
     /**
      * @param $fromPhone
-     * @param $toPhone
+     * @param string|[] $toPhone using Array if for bulk send
      * @param $message
      * @return mixed|\Psr\Http\Message\ResponseInterface|string
      * @throws RequestException
      */
     public function sendWhatsapp($fromPhone, $toPhone, $message)
     {
-
-        $url = "{$this->getHost()}/whatsapp/send";
         $payload = [
             "secret" => $this->secretKey,
             "fromPhone" => $fromPhone,
-            "phone" => $toPhone,
             "message" => $message
         ];
-        
+
+        if (is_array($toPhone)){
+            $url = "{$this->getHost()}/whatsapp/bulkSend";
+            $payload['phones'] = $toPhone;
+        }
+        else {
+            $url = "{$this->getHost()}/whatsapp/send";
+            $payload['phone'] = $toPhone;
+        }
+
         try {
 	        $client = new \GuzzleHttp\Client();
 	
