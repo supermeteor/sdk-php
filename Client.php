@@ -126,7 +126,9 @@ class Client
                 return $response;
         }
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client([
+            'verify' => false,
+        ]);
 
         try {
             $response = $client->request('POST', $url, [
@@ -192,7 +194,9 @@ class Client
         ];
         
         try {
-	        $client = new \GuzzleHttp\Client();
+	        $client = new \GuzzleHttp\Client([
+                'verify' => false,
+            ]);
 	
 	        $response = $client->request(
 		        'POST', $url, [\GuzzleHttp\RequestOptions::JSON => $payload]);
@@ -229,7 +233,9 @@ class Client
         }
 
         try {
-	        $client = new \GuzzleHttp\Client();
+	        $client = new \GuzzleHttp\Client([
+                'verify' => false,
+            ]);
 	
 	        $response = $client->request(
 		        'POST', $url, [\GuzzleHttp\RequestOptions::JSON => $payload]);
