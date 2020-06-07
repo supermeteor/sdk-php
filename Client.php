@@ -41,6 +41,7 @@ class Client
         $curl = curl_init();
     
         curl_setopt_array($curl, array(
+            CURLOPT_SSL_VERIFYPEER => false,
 //            CURLOPT_URL => "https://api-uat.supermeteor.com/sms/send",
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => "",
