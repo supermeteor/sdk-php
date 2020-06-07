@@ -9,6 +9,8 @@ class Client
 	
     public $secretKey, $statusCode, $message, $sandbox;
     
+    protected $httpClient;
+    
     /**
      * Client constructor.
      * @param $secretKey
@@ -18,8 +20,43 @@ class Client
     {
         $this->secretKey = $secretKey;
         $this->sandbox = $sandbox;
+        
+        $this->httpClient = new \GuzzleHttp\Client([
+            'verify' => false,
+            'timeout' => 10,
+            'connection_timeout' => 10,
+        ]);
     }
     
+    public function setHttpClient($client){
+        $this->httpClient = $client;
+    }
+    
+    public function getHttpClient(){
+        if ($this->httpClient instanceof \GuzzleHttp\Client){
+            return $this->httpClient;
+        }
+    
+    
+        $curl = curl_init();
+    
+        curl_setopt_array($curl, array(
+//            CURLOPT_URL => "https://api-uat.supermeteor.com/sms/send",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+//            CURLOPT_CUSTOMREQUEST => "POST",
+//            CURLOPT_POSTFIELDS => "<JSON>",
+            CURLOPT_HTTPHEADER => array(
+                "content-type: application/json"
+            ),
+        ));
+    
+        return $curl;
+    }
+
     /**
      * @return string
      */
@@ -126,19 +163,44 @@ class Client
                 return $response;
         }
 
-        $client = new \GuzzleHttp\Client([
-            'verify' => false,
-        ]);
-
+        $client = $this->getHttpClient();
         try {
-            $response = $client->request('POST', $url, [
-                \GuzzleHttp\RequestOptions::JSON => [
-                    'secret' => $this->secretKey,
-                    'phone' => $phone,
-                    'message' => $message
-                ]
-            ]);
-            return json_decode($response->getBody()->getContents(), true);
+            $data = [
+                'secret' => $this->secretKey,
+                'phone' => $phone,
+                'message' => $message
+            ];
+            if ($client instanceof \GuzzleHttp\Client){
+                $response = $client->request('POST', $url, [
+                    \GuzzleHttp\RequestOptions::JSON => $data
+                ]);
+                return json_decode($response->getBody()->getContents(), true);
+            }
+            else {
+                $curl = $client;
+                curl_setopt($curl, CURLOPT_URL, $url);
+                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'POST');
+                curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
+                $response = curl_exec($curl);
+                
+                $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+                $err = curl_error($curl);
+                if ($err){
+                    curl_close($curl);
+                    throw new \Exception($err);
+                }
+                
+                if ($statusCode < 200 || $statusCode > 299){
+                    curl_close($curl);
+                    throw new \Exception($response, $statusCode);
+                }
+    
+                curl_close($curl);
+                
+                return json_decode($response, true);
+            }
+            
         } catch (\Exception $e){
         	throw new RequestException($e->getMessage(), $e->getCode(), $e);
         }
