@@ -274,11 +274,11 @@ class Client
     /**
      * @param $fromPhone
      * @param string|[] $toPhone using Array if for bulk send
-     * @param $message
+     * @param $message string|WhatsappTemplateMessage
      * @return mixed|\Psr\Http\Message\ResponseInterface|string
      * @throws RequestException
      */
-    public function sendWhatsapp($fromPhone, $toPhone, $message)
+    public function sendWhatsapp($fromPhone, $toPhone, WhatsappTemplateMessage $message)
     {
         $payload = [
             "secret" => $this->secretKey,
@@ -293,6 +293,28 @@ class Client
         else {
             $url = "{$this->getHost()}/whatsapp/send";
             $payload['phone'] = $toPhone;
+        }
+
+        if ($template instanceof WhatsappTemplateMessage){
+            $payload['message'] = null;
+            
+            foreach ($template->parameters as $key => $value) {
+                $parameters[] = [
+                    'type' => 'text',
+                    'text' => $value
+                ];
+            }
+            $payload['template'] = [
+                'name' => $template->$name,
+                'language' => [
+                    "policy" => "deterministic",
+                    "code" => $template->$languageCode
+                ],
+                "components": [
+                    "type" => "body",
+                    "parameters" => $parameters
+                ]
+            ]
         }
 
         try {
