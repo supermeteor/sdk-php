@@ -310,7 +310,7 @@ class Client
                     "policy" => "deterministic",
                     "code" => $template->$languageCode
                 ],
-                "components": [
+                "components" => [
                     "type" => "body",
                     "parameters" => $parameters
                 ]
