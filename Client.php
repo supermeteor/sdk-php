@@ -278,7 +278,7 @@ class Client
      * @return mixed|\Psr\Http\Message\ResponseInterface|string
      * @throws RequestException
      */
-    public function sendWhatsapp($fromPhone, $toPhone, WhatsappTemplateMessage $message)
+    public function sendWhatsapp($fromPhone, $toPhone, $message)
     {
         $payload = [
             "secret" => $this->secretKey,
