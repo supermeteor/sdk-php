@@ -314,7 +314,7 @@ class Client
                     "type" => "body",
                     "parameters" => $parameters
                 ]
-            ]
+                ];
         }
 
         try {
