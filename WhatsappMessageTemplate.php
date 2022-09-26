@@ -17,7 +17,7 @@ class WhatsappTemplateMessage
      */
     public function __construct($name = null, $languageCode = null, $parameters = [])
     {
-        $this->name = name;
+        $this->name = $name;
         $this->languageCode = $languageCode;
         $this->parameters = $parameters;
     }

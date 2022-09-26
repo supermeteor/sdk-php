@@ -295,7 +295,11 @@ class Client
             $payload['phone'] = $toPhone;
         }
 
-        if ($template instanceof WhatsappTemplateMessage){
+        if ($message instanceof WhatsappTemplateMessage){
+            /**
+             * @param WhatsappTemplateMessage $template
+             */
+            $template = $message;
             $payload['message'] = null;
             
             foreach ($template->parameters as $key => $value) {
@@ -305,10 +309,10 @@ class Client
                 ];
             }
             $payload['template'] = [
-                'name' => $template->$name,
+                'name' => $template->name,
                 'language' => [
                     "policy" => "deterministic",
-                    "code" => $template->$languageCode
+                    "code" => $template->languageCode
                 ],
                 "components" => [
                     "type" => "body",
