@@ -315,8 +315,10 @@ class Client
                     "code" => $template->languageCode
                 ],
                 "components" => [
-                    "type" => "body",
-                    "parameters" => $parameters
+                    [
+                        "type" => "body",
+                        "parameters" => $parameters
+                    ]
                 ]
                 ];
         }
