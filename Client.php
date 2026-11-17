@@ -244,8 +244,7 @@ class Client
         $valid = $this->ValidateSendEmailRequest($email, $subject, $message);
 
         if (!$valid) {
-            $response = $this->response();
-            return $response;
+            throw new RequestException($this->message);
         }
 
         $url = "{$this->getHost()}/email/send";
@@ -257,13 +256,16 @@ class Client
         ];
         
         try {
-	        $client = new \GuzzleHttp\Client([
-                'verify' => false,
+	        $response = $this->httpClient->request('POST', $url, [
+                \GuzzleHttp\RequestOptions::JSON => $payload,
+                'verify' => true,
+                'connect_timeout' => 10,
+                'timeout' => 10,
             ]);
-	
-	        $response = $client->request(
-		        'POST', $url, [\GuzzleHttp\RequestOptions::JSON => $payload]);
 	        $contents = json_decode($response->getBody()->getContents(), true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \UnexpectedValueException('Invalid JSON response from email API');
+            }
 	        return $contents;
         }
         catch (\Exception $e){

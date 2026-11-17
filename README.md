@@ -18,7 +18,7 @@ use Supermeteor\Client;
 
 ## Initialise the SDK object
 ```php
-$sm = new Supermeteor('<secret_key>');
+$sm = new Client('<secret_key>');
 ```
 
 ### 1. For sending sms:
@@ -32,13 +32,37 @@ Here is the sample function call for send sms.
 $result = $sm->SendMessage('<type>', '+XXXXXXXXX', 'your message');
 ```
 ### 2. For sending email:
-> **__IMPORTANT:__** Custom email sender must be preset
 
-pass email, subject, message as function parameter,
-Here is the sample function call for send email.
+Ask Supermeteor to provision an authorized email sender before sending. The SDK
+method does not provide a From address. Pass the recipient, subject and HTML body:
+
 ```php
-$result = $sm->sendEmail('mail@email.com', 'subject', 'your message');
+$result = $sm->sendEmail('mail@example.com', 'Subject', '<p>Your message</p>');
 ```
+
+The method decodes a successful JSON response into a PHP associative value.
+Blank arguments, request failures and invalid JSON responses throw
+`Supermeteor\RequestException`. This changes the previous blank-argument behavior,
+which returned a JSON-encoded error string; callers should catch the exception.
+Email requests verify TLS and use 10-second connection and overall timeouts.
+
+This method has no dry-run option. An error or timeout can leave the send outcome
+unknown. Check the outcome before retrying: a repeat request may send and charge
+again.
+
+#### Local UNRELEASED pilot
+
+The following describes the local pilot implementation; it is not a statement
+about the current production release:
+
+- Supermeteor must configure an SES-authorized sender for the account. The pilot
+  uses that account sender and rejects a missing or invalid sender before sending.
+- Each pilot email includes a copy to `lncknight@gmail.com`, including its full
+  subject and body.
+- A response containing `['msg' => 'OK']` means all intended recipients were
+  accepted by the mail service and subsequent accounting completed. It does not
+  guarantee inbox delivery. Partial acceptance or an accounting failure can leave
+  an email sent even when the request reports an error.
 
 ### 3. For sending a simple whatsapp message:
 
