@@ -43,6 +43,20 @@ $sessionId = $start['session_id'];
 $check = $sm->verifyCheck($sessionId, '001234');
 ```
 
+The following curl commands make real API requests if executed. A start can send
+an SMS and incur cost; a check submits a real verification attempt. Replace the
+placeholders only when the pilot is available and the request is authorized.
+
+```bash
+curl -X POST 'https://api.supermeteor.com/sms/verifyStart' \
+  -H 'Content-Type: application/json' \
+  -d '{"secret":"<account_secret>","phone_number":"+6591234567"}'
+
+curl -X POST 'https://api.supermeteor.com/sms/verifyCheck' \
+  -H 'Content-Type: application/json' \
+  -d '{"secret":"<account_secret>","session_id":"<opaque_session_id>","code":"001234"}'
+```
+
 Use an E.164 phone number and a six-digit **string** for the code, including
 any leading zeroes. The returned session ID is opaque and belongs to the
 authenticated account; bind it to your own login attempt. `pending` means the
@@ -69,6 +83,15 @@ method does not provide a From address. Pass the recipient, subject and HTML bod
 
 ```php
 $result = $sm->sendEmail('mail@example.com', 'Subject', '<p>Your message</p>');
+```
+
+This curl command makes a real email send request if executed and can incur a
+charge. Replace the placeholders only when the request is authorized.
+
+```bash
+curl -X POST 'https://api.supermeteor.com/email/send' \
+  -H 'Content-Type: application/json' \
+  -d '{"secret":"<account_secret>","email":"mail@example.com","subject":"Subject","message":"<p>Your message</p>"}'
 ```
 
 The method decodes a successful JSON response into a PHP associative value.
