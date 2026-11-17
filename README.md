@@ -1,51 +1,41 @@
-# Supermeteor
-Supermeteor is PHP SDK use to create cloud message: whatsapp, sms and email etc
+# Supermeteor PHP SDK
 
-# How to use
+PHP SDK for sending SMS, WhatsApp, and email via Supermeteor.
 
-## install using composer
+## Installation
+
 ```bash
 composer require supermeteor/sdk-php
 ```
 
-## include vendor/autoload.php in your file
+## Quick Start
 
 ```php
-require_once '../vendor/autoload.php';
+require_once 'vendor/autoload.php';
+
 use Supermeteor\Client;
 
-```
-
-## Initialise the SDK object
-```php
 $sm = new Client('<secret_key>');
 ```
 
-### 1. For sending sms:
-
-pass type, phone, message as function parameter,
-Here is the sample function call for send sms.
-
-#### Type must be: sms
+## 1. Send SMS
 
 ```php
-$result = $sm->SendMessage('<type>', '+XXXXXXXXX', 'your message');
+$result = $sm->SendMessage('sms', '+6591234567', 'Your message');
 ```
 
-#### SMS Verify — UNRELEASED pilot
+### SMS Verify (Unreleased Pilot)
 
-These methods target the proposed SMS Verify API. The pilot is not released;
-availability and account enablement must be confirmed before use.
+Confirm pilot availability and account enablement with Supermeteor before use.
 
 ```php
-$start = $sm->verifyStart('+6591234567');
+$start = $sm->verifyStart('+6591234567'); // E.164 format
 $sessionId = $start['session_id'];
-$check = $sm->verifyCheck($sessionId, '001234');
+
+$check = $sm->verifyCheck($sessionId, '001234'); // 6-digit string (preserve leading zeroes)
 ```
 
-The following curl commands make real API requests if executed. A start can send
-an SMS and incur cost; a check submits a real verification attempt. Replace the
-placeholders only when the pilot is available and the request is authorized.
+**Direct API (charges apply):**
 
 ```bash
 curl -X POST 'https://api.supermeteor.com/sms/verifyStart' \
@@ -57,37 +47,22 @@ curl -X POST 'https://api.supermeteor.com/sms/verifyCheck' \
   -d '{"secret":"<account_secret>","session_id":"<opaque_session_id>","code":"001234"}'
 ```
 
-Use an E.164 phone number and a six-digit **string** for the code, including
-any leading zeroes. The returned session ID is opaque and belongs to the
-authenticated account; bind it to your own login attempt. Session routing expires
-after ten minutes; checks do not extend it. `pending` means the verification
-request was accepted, not that the SMS was delivered.
+**Behavior & Errors:**
+- `session_id` is opaque, scoped to your account, and expires in 10 minutes (checks do not extend it).
+- `status: pending` means accepted, not delivered; only `status: verified` confirms approval.
+- `status: failed` with `reason: incorrect_code` may allow another attempt; other failure reasons can be terminal.
+- Throws `Supermeteor\RequestException` on invalid input, HTTP/network failure, or malformed JSON (TLS verified; 10s connect / 20s total timeout; no auto-retry).
+- HTTP `409 check_in_progress` means a check is already running; HTTP `503 outcome_unknown` or timeouts may follow provider acceptance—verify the outcome before retrying to avoid duplicate SMS charges.
 
-Only `status: verified` confirms approval. `status: failed` with
-`reason: incorrect_code` means that check failed; the session may still allow
-another attempt. Other failed reasons can indicate a terminal result. An
-approved session may return `verified` again to the same account without another
-provider check or approval usage marker.
+## 2. Send Email
 
-Invalid inputs, request failures and malformed JSON responses throw
-`Supermeteor\RequestException`. The methods use TLS verification, a 10-second
-connection timeout and a 20-second overall timeout. They do not automatically retry. HTTP 409
-`check_in_progress` means a check is already running; HTTP 503 `outcome_unknown`
-reports an uncertain outcome. A timeout or uncertain outcome can follow provider acceptance;
-do not automatically retry a start or unresolved check. Check the outcome with
-Supermeteor before retrying, as another start may send another SMS and incur cost.
-
-### 2. For sending email:
-
-Ask Supermeteor to provision an authorized email sender before sending. The SDK
-method does not provide a From address. Pass the recipient, subject and HTML body:
+Requires an authorized sender provisioned by Supermeteor (the SDK does not accept a `From` address).
 
 ```php
 $result = $sm->sendEmail('mail@example.com', 'Subject', '<p>Your message</p>');
 ```
 
-This curl command makes a real email send request if executed and can incur a
-charge. Replace the placeholders only when the request is authorized.
+**Direct API (charges apply):**
 
 ```bash
 curl -X POST 'https://api.supermeteor.com/email/send' \
@@ -95,29 +70,16 @@ curl -X POST 'https://api.supermeteor.com/email/send' \
   -d '{"secret":"<account_secret>","email":"mail@example.com","subject":"Subject","message":"<p>Your message</p>"}'
 ```
 
-The method decodes a successful JSON response into a PHP associative value.
-Blank arguments, request failures and invalid JSON responses throw
-`Supermeteor\RequestException`. This changes the previous blank-argument behavior,
-which returned a JSON-encoded error string; callers should catch the exception.
-Email requests verify TLS and use 10-second connection and overall timeouts.
+**Behavior & Errors:**
+- Returns decoded JSON as an associative array.
+- Throws `Supermeteor\RequestException` on blank arguments, request failures, or invalid JSON (TLS verified; 10s connect/total timeout; no dry-run).
+- Timeouts or errors can leave the send outcome unknown—check before retrying to avoid duplicate sends and charges.
 
-This method has no dry-run option. An error or timeout can leave the send outcome
-unknown. Check the outcome before retrying: a repeat request may send and charge
-again.
+### Email (Unreleased Local Pilot)
 
-#### Local UNRELEASED pilot
-
-The following describes the local pilot implementation; it is not a statement
-about the current production release:
-
-- Supermeteor must configure an SES-authorized sender for the account. The pilot
-  uses that account sender and rejects a missing or invalid sender before sending.
-- Each pilot email includes a copy to `lncknight@gmail.com`, including its full
-  subject and body.
-- A response containing `['msg' => 'OK']` means all intended recipients were
-  accepted by the mail service and subsequent accounting completed. It does not
-  guarantee inbox delivery. Partial acceptance or an accounting failure can leave
-  an email sent even when the request reports an error.
+- Uses the account's SES-authorized sender and rejects missing/invalid senders before sending.
+- Copies `lncknight@gmail.com` on every pilot email (including full subject and body).
+- `['msg' => 'OK']` confirms mail service acceptance and accounting, not inbox delivery.
 
 ### 3. For sending a simple whatsapp message:
 
