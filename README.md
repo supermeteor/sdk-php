@@ -59,8 +59,9 @@ curl -X POST 'https://api.supermeteor.com/sms/verifyCheck' \
 
 Use an E.164 phone number and a six-digit **string** for the code, including
 any leading zeroes. The returned session ID is opaque and belongs to the
-authenticated account; bind it to your own login attempt. `pending` means the
-verification request was accepted, not that the SMS was delivered.
+authenticated account; bind it to your own login attempt. Session routing expires
+after ten minutes; checks do not extend it. `pending` means the verification
+request was accepted, not that the SMS was delivered.
 
 Only `status: verified` confirms approval. `status: failed` with
 `reason: incorrect_code` means that check failed; the session may still allow
