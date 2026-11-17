@@ -31,6 +31,37 @@ Here is the sample function call for send sms.
 ```php
 $result = $sm->SendMessage('<type>', '+XXXXXXXXX', 'your message');
 ```
+
+#### SMS Verify — UNRELEASED pilot
+
+These methods target the proposed SMS Verify API. The pilot is not released;
+availability and account enablement must be confirmed before use.
+
+```php
+$start = $sm->verifyStart('+6591234567');
+$sessionId = $start['session_id'];
+$check = $sm->verifyCheck($sessionId, '001234');
+```
+
+Use an E.164 phone number and a six-digit **string** for the code, including
+any leading zeroes. The returned session ID is opaque and belongs to the
+authenticated account; bind it to your own login attempt. `pending` means the
+verification request was accepted, not that the SMS was delivered.
+
+Only `status: verified` confirms approval. `status: failed` with
+`reason: incorrect_code` means that check failed; the session may still allow
+another attempt. Other failed reasons can indicate a terminal result. An
+approved session may return `verified` again to the same account without another
+provider check or approval usage marker.
+
+Invalid inputs, request failures and malformed JSON responses throw
+`Supermeteor\RequestException`. The methods use TLS verification, a 10-second
+connection timeout and a 20-second overall timeout. They do not automatically retry. HTTP 409
+`check_in_progress` means a check is already running; HTTP 503 `outcome_unknown`
+reports an uncertain outcome. A timeout or uncertain outcome can follow provider acceptance;
+do not automatically retry a start or unresolved check. Check the outcome with
+Supermeteor before retrying, as another start may send another SMS and incur cost.
+
 ### 2. For sending email:
 
 Ask Supermeteor to provision an authorized email sender before sending. The SDK

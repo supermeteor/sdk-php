@@ -274,6 +274,55 @@ class Client
     }
     
     /**
+     * Start an SMS verification for an E.164 phone number.
+     * @throws RequestException
+     */
+    public function verifyStart($phoneNumber)
+    {
+        if (!is_string($phoneNumber) || !preg_match('/\A\+[1-9][0-9]{1,14}\z/', $phoneNumber)) {
+            throw new RequestException('phone number must be in E.164 format');
+        }
+
+        return $this->verifyRequest('verifyStart', ['phone_number' => $phoneNumber]);
+    }
+
+    /**
+     * Check a six-digit code against an opaque verification session.
+     * @throws RequestException
+     */
+    public function verifyCheck($sessionId, $code)
+    {
+        if (!is_string($sessionId) || trim($sessionId) === '') {
+            throw new RequestException('session ID must not be blank');
+        }
+        if (!is_string($code) || !preg_match('/\A[0-9]{6}\z/', $code)) {
+            throw new RequestException('code must be a six-digit string');
+        }
+
+        return $this->verifyRequest('verifyCheck', ['session_id' => $sessionId, 'code' => $code]);
+    }
+
+    private function verifyRequest($endpoint, $data)
+    {
+        $payload = array_merge(['secret' => $this->secretKey], $data);
+        try {
+            $response = $this->httpClient->request('POST', "{$this->getHost()}/sms/{$endpoint}", [
+                \GuzzleHttp\RequestOptions::JSON => $payload,
+                'verify' => true,
+                'connect_timeout' => 10,
+                'timeout' => 20,
+            ]);
+            $contents = json_decode($response->getBody()->getContents(), true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \UnexpectedValueException('Invalid JSON response from SMS Verify API');
+            }
+            return $contents;
+        } catch (\Exception $e) {
+            throw new RequestException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
      * @param $fromPhone
      * @param string|[] $toPhone using Array if for bulk send
      * @param $message string|WhatsappTemplateMessage
