@@ -1,0 +1,69 @@
+name: Publish to Packagist
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          coverage: none
+
+      - name: Validate package
+        run: composer validate --no-check-publish
+
+      - name: Run offline tests
+        run: |
+          php tests/email-offline.php
+          php tests/sms-verify-offline.php
+
+      - name: Refresh Packagist
+        env:
+          PACKAGIST_USERNAME: ${{ vars.PACKAGIST_USERNAME }}
+          PACKAGIST_API_TOKEN: ${{ secrets.PACKAGIST_API_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+
+          username = os.environ['PACKAGIST_USERNAME']
+          token = os.environ['PACKAGIST_API_TOKEN']
+          if not username or not token:
+              raise SystemExit('Set the PACKAGIST_USERNAME repository variable and PACKAGIST_API_TOKEN repository secret.')
+
+          query = urllib.parse.urlencode({'username': username, 'apiToken': token})
+          payload = json.dumps({'repository': {'url': 'https://github.com/supermeteor/sdk-php'}}).encode()
+          request = urllib.request.Request(
+              'https://packagist.org/api/update-package?' + query,
+              data=payload,
+              headers={'Content-Type': 'application/json'},
+              method='POST',
+          )
+          try:
+              with urllib.request.urlopen(request, timeout=60) as response:
+                  result = json.load(response)
+          except urllib.error.HTTPError as error:
+              raise SystemExit('Packagist refresh failed (HTTP {}).'.format(error.code)) from None
+          except (urllib.error.URLError, TimeoutError):
+              raise SystemExit('Packagist refresh failed; check connectivity and rerun the job.') from None
+          if result.get('status') != 'success':
+              raise SystemExit('Packagist did not report success; check the package page.')
+          print('Packagist accepted the package refresh. Check the package page for the new version.')
+          PY

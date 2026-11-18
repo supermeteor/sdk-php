@@ -264,3 +264,28 @@ message pre-approved
   }
 }
 ```
+
+## Publishing a release
+
+The `Publish to Packagist` GitHub Actions workflow runs when a version tag such as
+`v1.8.0` is pushed. It validates Composer metadata, runs the offline tests, and
+requests a refresh of the existing `supermeteor/sdk-php` Packagist package.
+
+One-time setup in **GitHub repository Settings → Secrets and variables → Actions**:
+
+- **Variables tab** → **New repository variable**: `PACKAGIST_USERNAME`, the Packagist username of a package maintainer.
+- **Secrets tab** → **New repository secret**: `PACKAGIST_API_TOKEN`, that maintainer's Packagist API token. Prefer a dedicated
+  update token where available.
+
+Merge the workflow and SDK changes before tagging the intended release commit:
+
+```bash
+git tag -a v1.8.0 -m "Add email and SMS verification APIs"
+git push origin v1.8.0
+```
+
+Use a new version for each release; Composer derives it from the Git tag.
+Check the Actions run and https://packagist.org/packages/supermeteor/sdk-php for
+the new version. If a refresh fails after validation, fix the configuration and
+rerun the failed job. A failed workflow does not remove the Git tag or prevent
+Packagist's existing auto-update integration from discovering it independently.
