@@ -4,6 +4,10 @@ PHP SDK for sending SMS, WhatsApp, and email via Supermeteor.
 
 ## Installation
 
+Requires PHP **7.2.5 or later within PHP 7.x, or PHP 8.x**. CI verifies PHP
+7.2.5, 7.3, 7.4, and 8.0–8.5; future PHP 8.x versions are allowed by Composer
+but need verification when released.
+
 ```bash
 composer require supermeteor/sdk-php
 ```
