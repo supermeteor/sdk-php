@@ -1,7 +1,11 @@
 name: Publish to Packagist
 
 on:
+  pull_request:
+  workflow_dispatch:
   push:
+    branches:
+      - master
     tags:
       - 'v[0-9]*.[0-9]*.[0-9]*'
 
@@ -9,7 +13,51 @@ permissions:
   contents: read
 
 jobs:
+  verify:
+    name: Verify PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.2.5', '7.3', '7.4', '8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+          coverage: none
+
+      - name: Validate and resolve dependencies for this PHP runtime
+        run: |
+          php --version
+          composer validate --no-check-publish
+          composer update --no-interaction --no-plugins --no-scripts --prefer-dist --no-progress
+          composer check-platform-reqs
+
+      - name: Lint SDK and offline tests
+        run: |
+          php -l Client.php
+          php -l RequestException.php
+          php -l WhatsappMessageTemplate.php
+          php -l tests/email-offline.php
+          php -l tests/sms-verify-offline.php
+
+      - name: Check installed Guzzle and SDK autoloading without sending
+        run: php -r 'require "vendor/autoload.php"; new \Supermeteor\Client("ci-placeholder"); echo "SDK and Guzzle loaded successfully\n";'
+
+      - name: Run offline tests
+        run: |
+          php tests/email-offline.php
+          php tests/sms-verify-offline.php
+
   publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

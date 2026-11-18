@@ -268,8 +268,8 @@ message pre-approved
 ## Publishing a release
 
 The `Publish to Packagist` GitHub Actions workflow runs when a version tag such as
-`v1.8.0` is pushed. It validates Composer metadata, runs the offline tests, and
-requests a refresh of the existing `supermeteor/sdk-php` Packagist package.
+`v1.8.0` is pushed. Publishing waits for the PHP compatibility matrix to pass,
+then requests a refresh of the existing `supermeteor/sdk-php` Packagist package.
 
 One-time setup in **GitHub repository Settings → Secrets and variables → Actions**:
 
@@ -289,3 +289,14 @@ Check the Actions run and https://packagist.org/packages/supermeteor/sdk-php for
 the new version. If a refresh fails after validation, fix the configuration and
 rerun the failed job. A failed workflow does not remove the Git tag or prevent
 Packagist's existing auto-update integration from discovering it independently.
+
+### PHP compatibility checks
+
+The workflow also verifies pull requests, pushes to `master`, and manual runs.
+It tests PHP 7.2.5 and the latest available patches of PHP 7.3, 7.4, and 8.0–8.5.
+Each job resolves and installs dependencies using its actual PHP runtime, checks
+platform requirements, lints the SDK, loads the SDK with real Guzzle, and runs the
+offline tests. The offline tests stub HTTP; no messages are sent.
+
+This matrix checks current dependency resolution and the covered SDK behavior;
+it does not exercise every SDK method against real Guzzle or the live API.
